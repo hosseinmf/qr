@@ -47,7 +47,13 @@ export const GET = async (request: NextRequest) => {
     Date.now() + env.ZARINPAL_SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000,
   ).toISOString();
 
-  const { error } = await supabase()
+  const supabaseClient = supabase();
+
+  if (!("from" in supabaseClient)) {
+    return new Response("Supabase client unavailable", { status: 500 });
+  }
+
+  const { error } = await supabaseClient
     .from("subscriptions")
     .upsert({
       ends_at: renewDate,
