@@ -29,13 +29,18 @@
 ```env
 ZARINPAL_MERCHANT_ID=
 ZARINPAL_AMOUNT=10000
-ZARINPAL_CALLBACK_URL=http://localhost:3000/payments-api/zarinpal-callback
+ZARINPAL_CALLBACK_URL=http://localhost:3070/payments-api/zarinpal-callback
 ZARINPAL_SANDBOX=true
-ZARINPAL_SUCCESS_REDIRECT=http://localhost:3000/dashboard
-ZARINPAL_FAILURE_REDIRECT=http://localhost:3000/billing?status=failed
+ZARINPAL_SUCCESS_REDIRECT=http://localhost:3070/dashboard
+ZARINPAL_FAILURE_REDIRECT=http://localhost:3070/billing?status=failed
 ZARINPAL_SUBSCRIPTION_DAYS=30
 ZARINPAL_PAYMENT_PORTAL_URL=https://www.zarinpal.com/pg/services/payment
 ```
+
+> نکته: پیش از اجرای Docker یا حالت محلی، فایل `.env` را با دستور زیر از نمونه بسازید و مقادیر را تکمیل کنید:
+> ```bash
+> cp .env.example .env
+> ```
 
 ## راه‌اندازی محلی
 ```bash
@@ -58,10 +63,15 @@ docker build -t feastqr:latest .
 ```
 
 ### اجرای سریع با Docker Compose
+1. یک بار فایل `.env` را از نمونه کپی کنید و مقادیر دیتابیس/Supabase و زرین‌پال را بنویسید:
+   ```bash
+   cp .env.example .env
+   ```
+2. سرویس را بالا بیاورید:
 ```bash
 docker compose up -d
 ```
-سرویس روی پورت 3000 در دسترس است. تنها کاری که لازم است انجام دهید تنظیم Reverse Proxy (مثلاً Nginx) روی همین پورت است.
+سرویس روی پورت 3070 در دسترس است. تنها کاری که لازم است انجام دهید تنظیم Reverse Proxy (مثلاً Nginx) روی همین پورت است.
 
 ## نکات پایانی
 - برای تولید کلاینت Prisma پس از نصب، اسکریپت `postinstall` به صورت خودکار اجرا می‌شود.
