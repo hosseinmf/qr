@@ -29,10 +29,10 @@
 ```env
 ZARINPAL_MERCHANT_ID=
 ZARINPAL_AMOUNT=10000
-ZARINPAL_CALLBACK_URL=http://localhost:3070/payments-api/zarinpal-callback
-ZARINPAL_SANDBOX=true
-ZARINPAL_SUCCESS_REDIRECT=http://localhost:3070/dashboard
-ZARINPAL_FAILURE_REDIRECT=http://localhost:3070/billing?status=failed
+ZARINPAL_CALLBACK_URL=https://your-domain.com/payments-api/zarinpal-callback
+ZARINPAL_SANDBOX=false # در صورت استفاده از سن‌باکس مقدار را true کنید
+ZARINPAL_SUCCESS_REDIRECT=https://your-domain.com/dashboard
+ZARINPAL_FAILURE_REDIRECT=https://your-domain.com/billing?status=failed
 ZARINPAL_SUBSCRIPTION_DAYS=30
 ZARINPAL_PAYMENT_PORTAL_URL=https://www.zarinpal.com/pg/services/payment
 ```
@@ -48,6 +48,42 @@ pnpm install
 pnpm dev
 ```
 پیش از اجرای پروژه مطمئن شوید مقادیر Supabase و زرین‌پال در `.env` تکمیل شده باشند.
+
+## آماده‌سازی و استقرار روی دامنه جدید (Production)
+۱. **دامنه و پیش‌نیازها**
+   - دامنه‌ای که قرار است روی آن سرویستان را با Reverse Proxy (مثلاً Nginx) به پورت 3070 متصل کنید داشته باشید.
+   - یک پروژه Supabase یا PostgreSQL آماده با دسترسی `Service Role` و `Anon Key`.
+   - مرچنت کد زرین‌پال و آدرس‌های دامنه نهایی برای صفحات Redirect و Callback.
+
+۲. **فایل محیطی را برای دامنه نهایی پر کنید**
+   ```bash
+   cp .env.example .env
+   ```
+   سپس موارد زیر را با دامنه و پروژه خود جایگزین کنید:
+   - `NEXT_PUBLIC_SUPABASE_URL` و کلیدهای `NEXT_PUBLIC_SUPABASE_ANON_KEY` و `SUPABASE_SERVICE_KEY`.
+   - `DATABASE_URL` و `DIRECT_URL` بر اساس همان پروژه Supabase/Postgres.
+   - لینک‌های `ZARINPAL_CALLBACK_URL`، `ZARINPAL_SUCCESS_REDIRECT` و `ZARINPAL_FAILURE_REDIRECT` را با دامنه نهایی (مثلاً `https://example.com`) جایگزین کنید.
+   - اگر در محیط سن‌باکس زرین‌پال هستید `ZARINPAL_SANDBOX=true` بگذارید؛ برای پروداکشن مقدار پیش‌فرض `false` را حفظ کنید.
+
+۳. **بیلد و اجرای Docker بدون تغییر کد**
+   ```bash
+   docker build -t feastqr:latest .
+   docker compose up -d
+   ```
+   سرویس روی پورت 3070 بالا می‌آید. تنها کافی است Reverse Proxy خود را به این پورت متصل کنید و گواهی TLS دامنه را روی وب‌سرور (نه برنامه) تنظیم نمایید.
+
+۴. **بررسی سلامت**
+   - لاگ‌ها را با `docker compose logs -f` بررسی کنید.
+   - صفحه لاگین در دامنه جدید را باز کنید؛ در صورت خطای اتصال پایگاه داده، مقداردهی‌های `.env` را مرور کنید.
+
+۵. **به‌روزرسانی آتی**
+   ```bash
+   git pull
+   docker build -t feastqr:latest .
+   docker compose up -d --force-recreate
+   ```
+
+> نکته: الگوی تصاویر از هر دامنه‌ی `*.supabase.co` پشتیبانی می‌کند تا برای هر پروژه Supabase بدون تغییر کد کار کند.
 
 ## پرداخت زرین‌پال
 - درخواست پرداخت از طریق زرین‌پال ساخته می‌شود و کاربر به درگاه هدایت می‌شود.
