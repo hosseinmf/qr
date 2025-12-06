@@ -57,6 +57,57 @@ pnpm dev
 ## داکر
 پروژه داکرایز شده و خروجی `standalone` برای Next.js استفاده می‌شود.
 
+### راهنمای صفر تا صد اجرا با Docker (مبتدیان)
+1. **پیش‌نیازها را نصب کنید:**
+   - Docker Desktop یا Docker Engine و Docker Compose روی سیستم شما نصب و فعال باشد.
+   - مطمئن شوید دستور `docker info` بدون خطا اجرا می‌شود.
+2. **پروژه را دریافت کنید:**
+   ```bash
+   git clone https://github.com/FeastQR/FeastQR.git
+   cd FeastQR
+   ```
+3. **فایل محیطی را آماده کنید:**
+   ```bash
+   cp .env.example .env
+   ```
+   سپس در فایل `.env` مقادیر Supabase/PostgreSQL، آدرس‌های زرین‌پال و دامنه/پورت نهایی سرویس را وارد کنید.
+4. **بیلد تصویر:**
+   ```bash
+   docker build -t feastqr:latest .
+   ```
+   اگر هنگام بیلد با ارورهای TypeScript مشابه `languageId implicitly has an 'any' type` روبه‌رو شدید، ابتدا کد را به‌روزرسانی و سپس دوباره بیلد کنید.
+5. **اجرای کانتینر به صورت ساده:**
+   ```bash
+   docker run -d --name feastqr -p 3070:3070 --env-file .env feastqr:latest
+   ```
+   حالا برنامه روی پورت 3070 در دسترس است: `http://localhost:3070`.
+6. **اجرای پایدار با Docker Compose (ترجیحی):**
+   - فایل `docker-compose.yml` موجود است. کافی است اجرا کنید:
+     ```bash
+     docker compose up -d
+     ```
+   - در صورت نیاز به لاگ‌ها:
+     ```bash
+     docker compose logs -f
+     ```
+7. **بستن سرویس:**
+   ```bash
+   docker compose down
+   ```
+   یا اگر بدون Compose اجرا کرده‌اید:
+   ```bash
+   docker stop feastqr && docker rm feastqr
+   ```
+8. **به‌روزرسانی:**
+   ```bash
+   git pull
+   docker build -t feastqr:latest .
+   docker compose up -d --force-recreate
+   ```
+9. **سوالات متداول کوتاه:**
+   - *پایگاه داده جدا لازم است؟* بله، Docker فایل دیتابیس ندارد؛ به Supabase یا PostgreSQL خارجی وصل شوید و مقادیر را در `.env` بنویسید.
+   - *چطور می‌فهمم متغیرها درست‌اند؟* بعد از بالا آمدن سرویس، صفحه لاگین را باز کنید؛ خطاهای اتصال پایگاه داده در `docker compose logs` دیده می‌شود.
+
 ### ساخت تصویر
 ```bash
 docker build -t feastqr:latest .
