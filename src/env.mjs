@@ -17,7 +17,7 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    SUPABASE_SERVICE_KEY: z.string().min(1),
+    SUPABASE_SERVICE_KEY: z.string().min(1).optional(),
     DIRECT_URL: z.string().min(1),
     ZARINPAL_MERCHANT_ID: z.string().min(1),
     ZARINPAL_CALLBACK_URL: z.string().url(),
@@ -35,8 +35,8 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+    NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
     NEXT_PUBLIC_UMAMI_WEBSITE_ID: z.string().optional(),
     NEXT_PUBLIC_UMAMI_URL: z.string().optional(),
   },
