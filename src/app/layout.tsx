@@ -3,7 +3,6 @@ import { detectLanguage, useServerTranslation } from "~/i18n";
 import { Providers } from "~/providers";
 import "~/styles/globals.css";
 import { cn } from "~/utils/cn";
-import { Roboto } from "next/font/google";
 import { Toaster } from "~/components/ui/toaster";
 import { TRPCReactProvider } from "~/trpc/react";
 import { headers } from "next/headers";
@@ -42,11 +41,6 @@ export async function generateMetadata() {
   } satisfies Metadata;
 }
 
-const font = Roboto({
-  weight: ["100", "300", "400", "500", "700", "900"],
-  subsets: ["latin"],
-});
-
 async function RootLayout({ children }: { children: React.ReactNode }) {
   const initialLanguage = detectLanguage(); // Detect on server, pass to client
 
@@ -58,10 +52,7 @@ async function RootLayout({ children }: { children: React.ReactNode }) {
         <head />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <body
-          className={cn(
-            "min-h-screen bg-background antialiased",
-            font.className,
-          )}
+          className={cn("min-h-screen bg-background antialiased font-sans")}
         >
           <TRPCReactProvider headers={headers()}>
             <AuthProvider {...user}>
