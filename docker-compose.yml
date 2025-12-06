@@ -1,0 +1,13 @@
+services:
+  feastqr:
+    build: .
+    container_name: feastqr-app
+    env_file:
+      - .env
+    ports:
+      - "3070:3070"
+    restart: unless-stopped
+    environment:
+      - SKIP_ENV_VALIDATION=1
+      - PORT=3070
+    command: ["node", "server.js"]

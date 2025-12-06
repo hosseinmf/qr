@@ -39,6 +39,17 @@ const registerValidationSchema = (translate: TFunction) =>
 type RegisterFormValues = ZodReturnType<typeof registerValidationSchema>;
 
 const translations = {
+  fa: {
+    hello: "سلام",
+    confirmYourEmailAddress: "ایمیل خود را تأیید کنید.",
+    resetYourEmail: "بازنشانی ایمیل",
+    confirmYourEmailAddressDescription:
+      "برای تکمیل ثبت‌نام روی دکمه زیر بزنید.",
+    resetYourEmailDescription:
+      "برای بازنشانی ایمیل روی لینک زیر کلیک کنید.",
+    buttonText: "ادامه",
+    orCopyAndPaste: "یا این لینک را در مرورگر کپی کنید:",
+  },
   en: {
     hello: "Hello",
     confirmYourEmailAddress: "Confirm your email address.",
@@ -78,7 +89,7 @@ export function UserAuthForm() {
       await supabase().auth.signUp({
         ...data,
         options: {
-          data: translations[i18n.language as "en" | "pl"],
+          data: translations[i18n.language as "fa" | "en" | "pl"],
         },
       });
 

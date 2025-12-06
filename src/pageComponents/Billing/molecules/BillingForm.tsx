@@ -28,7 +28,7 @@ import { api } from "~/trpc/react";
 import { useUserSubscription } from "~/shared/hooks/useUserSubscription";
 import { useToast } from "~/components/ui/use-toast";
 import { cn } from "~/utils/cn";
-import { openLemonSqueezy } from "~/utils/payments";
+import { openZarinpalGateway } from "~/utils/payments";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useTranslation } from "react-i18next";
 
@@ -142,17 +142,19 @@ export function BillingForm() {
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 onClick={async () => {
                   if (isSubscribed) {
-                    openLemonSqueezy(subscriptionData?.updatePaymentUrl || "");
+                    openZarinpalGateway(
+                      subscriptionData?.updatePaymentUrl || "",
+                    );
 
                     return;
                   }
 
                   const checkoutUrl = await mutateAsync({
-                    language: i18n.language as "en" | "pl",
+                    language: i18n.language as "fa" | "en" | "pl",
                   });
 
                   if (checkoutUrl) {
-                    openLemonSqueezy(checkoutUrl);
+                    openZarinpalGateway(checkoutUrl);
                   } else {
                     toast({
                       title: "Error",

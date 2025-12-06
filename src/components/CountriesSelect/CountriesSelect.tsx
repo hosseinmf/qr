@@ -1,5 +1,8 @@
 import Select from "react-select";
 import { api } from "~/trpc/react";
+import { type RouterOutputs } from "~/trpc/shared";
+
+type Language = RouterOutputs["languages"]["getLanguages"][number];
 
 export const MultiCountriesSelect = ({
   value,
@@ -11,7 +14,7 @@ export const MultiCountriesSelect = ({
   className?: string;
 }) => {
   const { data, isLoading } = api.languages.getLanguages.useQuery();
-  const languagesSelectOptions = data?.map((lang) => ({
+  const languagesSelectOptions = data?.map((lang: Language) => ({
     label: lang.name,
     value: lang.id,
   }));
