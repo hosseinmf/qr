@@ -2,10 +2,9 @@ import { api } from "~/trpc/react";
 
 export const checkIfSubscribed = (status?: string) => {
   return (
+    status === "paid" ||
     status === "active" ||
-    status === "cancelled" ||
-    status === "on_trial" ||
-    status === "past_due"
+    status === "pending"
   );
 };
 

@@ -208,9 +208,6 @@ devDependencies:
   eslint-plugin-unused-imports:
     specifier: ^3.0.0
     version: 3.0.0(@typescript-eslint/eslint-plugin@6.7.5)(eslint@8.51.0)
-  lemonsqueezy.ts:
-    specifier: ^0.1.7
-    version: 0.1.7
   postcss:
     specifier: ^8.4.31
     version: 8.4.31
@@ -4300,13 +4297,6 @@ packages:
     engines: {node: '>= 0.6.3'}
     dependencies:
       readable-stream: 2.3.8
-    dev: true
-
-  /lemonsqueezy.ts@0.1.7:
-    resolution: {integrity: sha512-7COfsFaPVsz4ik6+b5hVI/PMyu6FE+PmrbNvk1G89P826XVRRnidVhDAes+Ed42RLyigc8bBHFbuUZSglPTO0g==}
-    engines: {node: '>=16.*'}
-    dependencies:
-      undici: 5.26.3
     dev: true
 
   /levn@0.4.1:

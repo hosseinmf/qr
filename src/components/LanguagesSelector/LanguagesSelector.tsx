@@ -22,7 +22,8 @@ export const MenuLanguagesSelector = ({
 }: Props) => {
   const { t } = useTranslation();
   const selectedMenuLanguage = menuLanguages.find(
-    (lang) => lang.languageId === selectedLanguageId,
+    (lang: FullMenuOutput["menuLanguages"][number]) =>
+      lang.languageId === selectedLanguageId,
   );
 
   return (
