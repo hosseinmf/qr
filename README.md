@@ -154,6 +154,24 @@ pnpm dev
 docker build -t feastqr:latest .
 ```
 
+### رفع خطای بیلد Supabase
+در صورتی که هنگام بیلد Docker یا اجرای `pnpm run build` با خطای زیر مواجه شدید:
+
+```
+Property 'from' does not exist on type 'LocalSupabaseClient'
+```
+
+علت این است که پروژه در حالت محلی بدون متغیرهای Supabase اجرا می‌شود. در نسخه‌ی فعلی یک لایه‌ی شبیه‌سازی برای پایگاه داده افزوده شده تا
+بیلد بدون نیاز به اتصال واقعی تکمیل شود. برای جلوگیری از خطا:
+
+1. آخرین نسخه‌ی مخزن را دریافت کنید یا فایل `src/server/supabase/supabaseClient.ts` را به‌روزرسانی کنید.
+2. برای اتصال واقعی پایگاه داده، مقادیر `NEXT_PUBLIC_SUPABASE_URL`، `NEXT_PUBLIC_SUPABASE_ANON_KEY` و `SUPABASE_SERVICE_KEY` را در `.env` کامل کنید.
+3. سپس مجدداً دستور بیلد را اجرا کنید:
+
+```bash
+pnpm run build
+```
+
 ### اجرای سریع با Docker Compose
 1. یک بار فایل `.env` را از نمونه کپی کنید و مقادیر دیتابیس/Supabase و زرین‌پال را بنویسید:
    ```bash

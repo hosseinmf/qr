@@ -237,6 +237,28 @@ class LocalSupabaseClient {
       createSignedUrl: async (path: string) => ({ data: { signedUrl: path }, error: null }),
     }),
   };
+
+  from(_table: string) {
+    const response = {
+      data: null,
+      error: new Error("Supabase database is unavailable in local mode."),
+    } as const;
+
+    let queryStub: any;
+
+    queryStub = {
+      select: async () => response,
+      insert: async () => response,
+      upsert: async () => response,
+      update: async () => response,
+      delete: async () => response,
+      eq: () => queryStub,
+      match: () => queryStub,
+      single: async () => response,
+    };
+
+    return queryStub;
+  }
 }
 
 const hasSupabaseEnv = Boolean(
