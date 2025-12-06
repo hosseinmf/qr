@@ -45,7 +45,7 @@ export const MenuLanguagesSelector = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        {menuLanguages.map((menuLanguage) => {
+        {menuLanguages.map((menuLanguage: FullMenuOutput["menuLanguages"][number]) => {
           const { languageId, languages } = menuLanguage;
           return (
             <DropdownMenuItem
