@@ -435,7 +435,7 @@ model Subscriptions {
   endsAt           DateTime? @map("ends_at") @db.Timestamptz(6)
   status           String
   createdAt        DateTime? @map("created_at") @db.Timestamptz(6)
-  lemonSqueezyId   String    @map("lemon_squeezy_id")
+  paymentAuthority String    @map("lemon_squeezy_id")
   jsonData         Json      @map("json_data")
   profiles         Profiles  @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 

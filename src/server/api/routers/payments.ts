@@ -1,32 +1,30 @@
-import { createTRPCRouter, privateProcedure } from "~/server/api/trpc";
-import { LemonsqueezyClient } from "lemonsqueezy.ts";
-import { env } from "~/env.mjs";
 import { TRPCError } from "@trpc/server";
-import { checkIfSubscribed } from "~/shared/hooks/useUserSubscription";
 import { z } from "zod";
+import { env } from "~/env.mjs";
+import { checkIfSubscribed } from "~/shared/hooks/useUserSubscription";
+import { createTRPCRouter, privateProcedure } from "~/server/api/trpc";
 
-const client = new LemonsqueezyClient(env.LEMON_SQUEEZY_API_KEY);
+const baseZarinpalUrl = env.ZARINPAL_SANDBOX
+  ? "https://sandbox.zarinpal.com"
+  : "https://api.zarinpal.com";
+
+const gatewayBaseUrl = env.ZARINPAL_SANDBOX
+  ? "https://sandbox.zarinpal.com/pg/StartPay/"
+  : "https://www.zarinpal.com/pg/StartPay/";
 
 const createPremiumCheckoutSchema = z.object({
-  language: z.enum(["en", "pl"]),
+  language: z.enum(["fa", "en", "pl"]),
 });
 
-const checkoutTranslations: Record<"en" | "pl", LemonsqueezyProductOptions> = {
+const checkoutTranslations: Record<"fa" | "en" | "pl", CheckoutCopy> = {
+  fa: {
+    description: "پرداخت اشتراک فست‌کیوآر برای مدیریت منوها.",
+  },
   en: {
-    description: "Display QR menus to your clients.",
-    name: "FeastQR Menu",
-    receipt_button_text: "Go to FeastQR",
-    receipt_link_url: "https://www.feastqr.com/dashboard",
-    receipt_thank_you_note: "Thank you for your purchase!",
-    redirect_url: "https://www.feastqr.com/dashboard",
+    description: "FeastQR subscription payment to manage your menus.",
   },
   pl: {
-    description: "Wyświetlaj menu QR Twoim klientom.",
-    name: "FeastQR Menu",
-    receipt_button_text: "Przejdź do FeastQR",
-    receipt_link_url: "https://www.feastqr.com/dashboard",
-    receipt_thank_you_note: "Dziękujemy za zakup!",
-    redirect_url: "https://www.feastqr.com/dashboard",
+    description: "Płatność za subskrypcję FeastQR do zarządzania menu.",
   },
 };
 
@@ -36,57 +34,89 @@ export const paymentsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const language = input.language;
       const translations = checkoutTranslations[language];
-      const newCheckout = await client.createCheckout({
-        checkout_data: {
-          custom: {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            userId: ctx.user.id,
-          },
-          name: ctx.user.email || "",
-          email: ctx.user.email || "",
-        },
-        checkout_options: {
-          embed: true,
-        },
 
-        store: env.LEMON_SQUEEZY_STORE_ID,
-        variant: env.LEMON_SQUEEZY_SUBSCRIPTION_VARIANT_ID,
-        product_options: translations,
+      const callbackUrl = new URL(env.ZARINPAL_CALLBACK_URL);
+      callbackUrl.searchParams.set("userId", ctx.user.id);
+
+      const requestPayload: ZarinpalRequestBody = {
+        merchant_id: env.ZARINPAL_MERCHANT_ID,
+        amount: env.ZARINPAL_AMOUNT,
+        description: translations.description,
+        callback_url: callbackUrl.toString(),
+        metadata: {
+          email: ctx.user.email ?? undefined,
+          order_id: ctx.user.id,
+          language,
+        },
+      };
+
+      const requestResponse = await fetch(
+        `${baseZarinpalUrl}/pg/v4/payment/request.json`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestPayload),
+        },
+      );
+
+      const requestJson = (await requestResponse.json()) as ZarinpalResponse;
+
+      if (!requestJson.data || requestJson.data.code !== 100) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message:
+            requestJson.errors?.[0]?.message ?? "خطا در اتصال به زرین‌پال.",
+        });
+      }
+
+      const authority = requestJson.data.authority;
+      const now = new Date();
+      const renewDate = new Date(
+        now.getTime() + env.ZARINPAL_SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000,
+      );
+
+      await ctx.db.subscriptions.upsert({
+        where: { profileId: ctx.user.id },
+        update: {
+          endsAt: renewDate,
+          renewsAt: renewDate,
+          status: "pending",
+          updatePaymentUrl: env.ZARINPAL_PAYMENT_PORTAL_URL,
+          jsonData: requestPayload,
+          paymentAuthority: authority,
+        },
+        create: {
+          profileId: ctx.user.id,
+          endsAt: renewDate,
+          renewsAt: renewDate,
+          status: "pending",
+          updatePaymentUrl: env.ZARINPAL_PAYMENT_PORTAL_URL,
+          jsonData: requestPayload,
+          paymentAuthority: authority,
+        },
       });
 
-      return newCheckout.data.attributes.url;
+      return `${gatewayBaseUrl}${authority}`;
     }),
   cancelSubscription: privateProcedure.mutation(async ({ ctx }) => {
     const subscription = await ctx.db.subscriptions.findFirst({
-      where: {
-        profileId: ctx.user.id,
-      },
+      where: { profileId: ctx.user.id },
     });
 
-    if (!subscription || subscription.status !== "active") {
+    if (!subscription || !checkIfSubscribed(subscription.status)) {
       throw new TRPCError({
         code: "CONFLICT",
         message: "Subscription not found or not active",
       });
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const updateResult = await client.updateSubscription({
-      id: subscription.lemonSqueezyId,
-      cancelled: true,
+    await ctx.db.subscriptions.update({
+      where: { profileId: ctx.user.id },
+      data: {
+        status: "cancelled",
+        endsAt: new Date(),
+      },
     });
-
-    const didCancelSuccessfully =
-      updateResult.data.attributes.cancelled === true;
-
-    if (!didCancelSuccessfully) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to cancel subscription",
-      });
-    }
   }),
   getSubscriptionInfo: privateProcedure.query(async ({ ctx }) => {
     return ctx.db.subscriptions.findFirst({
@@ -103,9 +133,7 @@ export const paymentsRouter = createTRPCRouter({
   }),
   getCustomerPortalUrl: privateProcedure.query(async ({ ctx }) => {
     const subscription = await ctx.db.subscriptions.findFirst({
-      where: {
-        profileId: ctx.user.id,
-      },
+      where: { profileId: ctx.user.id },
     });
 
     const isSubscribed = checkIfSubscribed(subscription?.status);
@@ -117,47 +145,29 @@ export const paymentsRouter = createTRPCRouter({
       });
     }
 
-    const subscriptionResult = await client.retrieveSubscription({
-      id: subscription.lemonSqueezyId,
-    });
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    return subscriptionResult.data.attributes.urls.customer_portal as string;
+    return env.ZARINPAL_PAYMENT_PORTAL_URL;
   }),
 });
 
-interface LemonsqueezyProductOptions {
-  /**
-   * A custom description for the product
-   */
+type CheckoutCopy = {
   description: string;
-  /**
-   * An array of variant IDs to enable for this checkout. If this is empty, all variants will be enabled
-   */
-  enabled_variants?: Array<string>;
-  /**
-   * An array of image URLs to use as the product's media
-   */
-  media?: Array<string>;
-  /**
-   * A custom name for the product
-   */
-  name: string;
-  /**
-   * A custom text to use for the order receipt email button
-   */
-  receipt_button_text: string;
-  /**
-   * A custom URL to use for the order receipt email button
-   */
-  receipt_link_url: string;
-  /**
-   * A custom thank you note to use for the order receipt email
-   */
-  receipt_thank_you_note: string;
-  /**
-   * A custom URL to redirect to after a successful purchase
-   */
-  redirect_url: string;
-}
+};
+
+type ZarinpalRequestBody = {
+  merchant_id: string;
+  amount: number;
+  description: string;
+  callback_url: string;
+  metadata?: Record<string, unknown>;
+};
+
+type ZarinpalResponse = {
+  data?: {
+    code: number;
+    authority: string;
+    fee_type?: string;
+    fee?: number;
+    message?: string;
+  };
+  errors?: Array<{ code: number; message: string }>;
+};

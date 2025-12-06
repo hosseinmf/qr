@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  feastqr:
+    build: .
+    container_name: feastqr-app
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    environment:
+      - SKIP_ENV_VALIDATION=1
+    command: ["node", "server.js"]
