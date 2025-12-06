@@ -1,5 +1,9 @@
-import Select from "react-select";
+import Select, { type MultiValue } from "react-select";
 import { api } from "~/trpc/react";
+import { type RouterOutputs } from "~/trpc/shared";
+
+type Language = RouterOutputs["languages"]["getLanguages"][number];
+type Option = { label: string; value: string };
 
 export const MultiCountriesSelect = ({
   value,
@@ -11,18 +15,20 @@ export const MultiCountriesSelect = ({
   className?: string;
 }) => {
   const { data, isLoading } = api.languages.getLanguages.useQuery();
-  const languagesSelectOptions = data?.map((lang) => ({
+  const languagesSelectOptions: Option[] | undefined = data?.map((lang: Language) => ({
     label: lang.name,
     value: lang.id,
   }));
 
   return (
-    <Select
+    <Select<Option, true>
       options={languagesSelectOptions}
-      value={languagesSelectOptions?.filter((option) =>
+      value={languagesSelectOptions?.filter((option: Option) =>
         value.includes(option.value),
       )}
-      onChange={(newValue) => onChange(newValue.map((val) => val.value))}
+      onChange={(newValue: MultiValue<Option>) =>
+        onChange(newValue.map((val) => val.value))
+      }
       isSearchable
       isMulti
       isLoading={isLoading}
